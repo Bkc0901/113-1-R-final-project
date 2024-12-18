@@ -25,6 +25,5 @@ head(tidy_energy_data)
   ) %>%
   as.data.frame()
 
-# View the result
-print(head(`Electricity_Consumption_by_Sector`))
+# Parse the columns as ordered factors except for `Year`
 
