@@ -17,3 +17,17 @@ tidy_water_quality <- tidy_water %>%
     dissolved_oxygen = `溶氧量數值（mg/l）`,
     turbidity = `濁度數值（NTU）`
   )
+glimpse(tidy_water_quality)
+
+tidy_water_quality <- tidy_water_quality |>
+  mutate(
+    river_name = factor(river_name),
+    station = factor(station),
+    month = factor(month, ordered = TRUE),
+    id = factor(id, ordered = TRUE)
+  )
+summary(tidy_water_quality)
+
+unique(tidy_water_quality$river_name)
+unique(tidy_water_quality$station)
+
