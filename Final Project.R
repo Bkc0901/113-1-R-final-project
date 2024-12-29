@@ -128,7 +128,8 @@ summary_data <- tidy_water_quality |>
     dissolved_oxygen = round(mean(dissolved_oxygen, na.rm = TRUE), 2),
     biochemical_oxygen_demand = round(mean(biochemical_oxygen_demand, na.rm = TRUE), 2),
     suspended_solids = round(mean(suspended_solids, na.rm = TRUE), 2),
-    ammonia_nitrogen = round(mean(ammonia_nitrogen, na.rm = TRUE), 2)
+    ammonia_nitrogen = round(mean(ammonia_nitrogen, na.rm = TRUE), 2),
+    turbidity = round(mean(turbidity, na.rm = TRUE), 2)
   ) |>
   dplyr::ungroup()
 
@@ -202,7 +203,255 @@ comparison_results <- summary_data |>
   ) |>
   dplyr::ungroup()
 
+# Count the number of samples in each pollution level category
+pollution_level_distribution <- summary_data |>
+  dplyr::count(pollution_level)
+
+# Stacked bar chart
+library(ggplot2)
+
+stacked_bar_chart <- ggplot(pollution_level_distribution, aes(x = "", y = n, fill = pollution_level)) +
+  geom_bar(stat = "identity", width = 1) +
+  labs(
+    title = "Distribution of Pollution Levels (Stacked Bar Chart)",
+    x = "Pollution Levels",
+    y = "Number of Samples",
+    fill = "Pollution Level"
+  ) +
+  theme_minimal()
+
+# Pie chart
+pie_chart <- ggplot(pollution_level_distribution, aes(x = "", y = n, fill = pollution_level)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(
+    title = "Distribution of Pollution Levels (Pie Chart)",
+    fill = "Pollution Level"
+  ) +
+  theme_void()
+
+# Display the charts
+print(stacked_bar_chart)
+print(pie_chart)
+
+library(ggplot2)
+
+#根據不同季節下同條河川不同監測站做RPI的趨勢圖
+# Create trend charts for seasonal values of each river
+trend_chart <- ggplot(summary_data, aes(x = season, y = rpi, color = monitoring_station, group = monitoring_station)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Seasonal Trend of RPI for Each River",
+    x = "Season",
+    y = "River Pollution Index (RPI)",
+    color = "Monitoring Station"
+  ) +
+  facet_wrap(~ river_name, scales = "free_y") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+# Display the chart
+print(trend_chart)
+
+library(ggplot2)
+
+# Trend chart for water temperature
+water_temperature_trend <- ggplot(summary_data, aes(x = season, y = water_temperature, color = monitoring_station, group = monitoring_station)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Seasonal Trend of Water Temperature for Each River",
+    x = "Season",
+    y = "Water Temperature (°C)",
+    color = "Monitoring Station"
+  ) +
+  facet_wrap(~ river_name, scales = "free_y") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+# Trend chart for turbidity
+turbidity_trend <- ggplot(summary_data, aes(x = season, y = turbidity, color = monitoring_station, group = monitoring_station)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Seasonal Trend of Turbidity for Each River",
+    x = "Season",
+    y = "Turbidity (NTU)",
+    color = "Monitoring Station"
+  ) +
+  facet_wrap(~ river_name, scales = "free_y") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+# Display the charts
+print(water_temperature_trend)
+print(turbidity_trend)
+
+library(ggplot2)
+
+# Trend chart for RPI across seasons
+rpi_trend_chart <- ggplot(summary_data, aes(x = season, y = rpi, color = interaction(river_name, monitoring_station), group = interaction(river_name, monitoring_station))) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Seasonal Trend of RPI Across All Rivers and Monitoring Stations",
+    x = "Season",
+    y = "River Pollution Index (RPI)",
+    color = "River & Station"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank(),
+    legend.position = "right"
+  )
+
+# Display the chart
+print(rpi_trend_chart)
+
+#水溫和含氧量的簡單線性回歸
+# Perform simple linear regression: DO ~ water temperature
+do_temperature_model <- lm(dissolved_oxygen ~ water_temperature, data = tidy_water_quality)
+
+# Summary of the regression model
+summary(do_temperature_model)
+
+# Visualize the relationship with a scatterplot and regression line
+library(ggplot2)
+
+do_temperature_plot <- ggplot(tidy_water_quality, aes(x = water_temperature, y = dissolved_oxygen)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(
+    title = "Relationship Between Water Temperature and Dissolved Oxygen",
+    x = "Water Temperature (°C)",
+    y = "Dissolved Oxygen (mg/L)"
+  ) +
+  theme_minimal()
+
+# Display the plot
+print(do_temperature_plot)
+summary(do_temperature_model)
+
+library(ggplot2)
+library(lmtest)
+
+#檢驗殘差
+# Model residuals
+residuals <- resid(do_temperature_model)
+fitted_values <- fitted(do_temperature_model)
+
+#檢測殘差的常態性
+# Check normality of residuals
+# Histogram 殘差直方圖
+ggplot(data.frame(residuals), aes(x = residuals)) +
+  geom_histogram(binwidth = 0.2, fill = "blue", alpha = 0.7) +
+  labs(title = "Histogram of Residuals", x = "Residuals", y = "Frequency") +
+  theme_minimal()
+
+#檢驗常態性
+# Q-Q plot
+qqnorm(residuals)
+qqline(residuals, col = "red")
+
+#檢測常態性
+# Shapiro-Wilk test for normality
+shapiro_test <- shapiro.test(residuals)
+print(shapiro_test)
+
+#檢測殘差和
+# Check zero mean of residuals
+mean_residual <- mean(residuals)
+cat("Mean of residuals:", mean_residual, "\n")
+
+install.packages("lmtest")
+
+# Check homoscedasticity檢測異質變異
+# Residuals vs. Fitted Values
+ggplot(data.frame(fitted_values, residuals), aes(x = fitted_values, y = residuals)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals") +
+  theme_minimal()
+
+# Breusch-Pagan test for homoscedasticity
+bptest_result <- bptest(do_temperature_model)
+print(bptest_result)
 
 
+#利用檢測標準化殘差、高槓桿、庫克距離離群值
+# Calculate diagnostic measures
+influence_measures <- data.frame(
+  standardized_residuals = rstandard(do_temperature_model),
+  leverage = hatvalues(do_temperature_model),
+  cooks_distance = cooks.distance(do_temperature_model)
+)
+
+# Add observation numbers for reference
+influence_measures <- influence_measures |>
+  dplyr::mutate(observation = row_number())
+
+# Identify outliers (standardized residuals > |3|)
+outliers <- influence_measures |>
+  dplyr::filter(abs(standardized_residuals) > 3)
+
+# Identify high-leverage points (leverage > 2 * (p/n))
+p <- length(coef(do_temperature_model))  # Number of predictors + 1
+n <- nrow(tidy_water_quality)           # Number of observations
+leverage_threshold <- 2 * (p / n)
+
+high_leverage_points <- influence_measures |>
+  dplyr::filter(leverage > leverage_threshold)
+
+# Identify influential points (Cook's Distance > 1)
+influential_points <- influence_measures |>
+  dplyr::filter(cooks_distance > 1)
+
+# Display results
+list(
+  outliers = outliers,
+  high_leverage_points = high_leverage_points,
+  influential_points = influential_points
+)
+
+# Residuals vs. Fitted
+plot(do_temperature_model, which = 1)
+
+# Cook's Distance
+plot(do_temperature_model, which = 4)
+
+# Leverage vs. Residuals
+plot(do_temperature_model, which = 5)
+
+
+# Apply log transformation to DO
+do_temperature_model_log <- lm(log(dissolved_oxygen) ~ water_temperature, data = tidy_water_quality)
+
+# Check model summary
+summary(do_temperature_model_log)
+
+# Diagnostic plots
+par(mfrow = c(2, 2))
+plot(do_temperature_model_log)
+
+# Apply log transformation to water temperature
+do_temperature_model_temp_log <- lm(dissolved_oxygen ~ log(water_temperature), data = tidy_water_quality)
+
+# Check model summary
+summary(do_temperature_model_temp_log)
+
+# Diagnostic plots
+par(mfrow = c(2, 2))
+plot(do_temperature_model_temp_log)
 
 
