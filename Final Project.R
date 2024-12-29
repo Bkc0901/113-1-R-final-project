@@ -433,7 +433,7 @@ plot(do_temperature_model, which = 4)
 # Leverage vs. Residuals
 plot(do_temperature_model, which = 5)
 
-
+#變數變異
 # Apply log transformation to DO
 do_temperature_model_log <- lm(log(dissolved_oxygen) ~ water_temperature, data = tidy_water_quality)
 
